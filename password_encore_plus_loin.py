@@ -57,28 +57,45 @@ def crypt_256(password):                           # Pour crypter le mot de pass
 #-------------------    SCRIPT  ---------------------------------------------------------------------------
 
 
+# 1 Ouvrir le fichier registre.json pour pouvoir comparer les mots de passe existant
+#   et éviter d'avoir des doublons
 if os.path.exists('registre.json'):                 # si registre.json existe
     with open('registre.json', 'r') as json_file:   # ouvre registre.json
         registre = json.load(json_file)             # charge son contenu dans registre
 else:                                               # sinon
     registre = []                                   # crée la liste registre[]
 
+
+
+
+# F Affiche le contenu du fichier registre.json,    juste pour voir.
 print("\nAu début du script, registre.json contient :\n")
 pprint.pprint(registre)
 print('\n')
 
+
+
+# 2 appelle la fonction motDePasse qui demande ou génère, puis valide et hashe le mot de passe
 motDePasse()
+
+
+# 3 vérifie que le mot de passe hashé n'existe pas dans registre.json
+#   si c'est bon, ajoute le nouveau mot de passe à la variable registre
 if hashed not in registre:
     registre.append(hashed)
     print("\nMot de passe validé\n")
     print("Le mot de passe a été crypté et ajouté au registre")
+#   sinon le mot de passe est refusé
 else:
     print("\nCe mot de passe est déjà utilisé\nChoisissez un mot de passe différent !")
 
-with open('registre.json', 'w') as json_file:       # ajoute existing_data à registre.json
+# ajoute registre à registre.json
+with open('registre.json', 'w') as json_file:       
     json.dump(registre, json_file, indent=4)
     json_file.write('\n')
 
+
+# F Affiche le contenu du fichier registre.json,    juste pour voir.
 print("\nA la fin du script, registre.json contient :\n")
 pprint.pprint(registre)
 print('\n')
