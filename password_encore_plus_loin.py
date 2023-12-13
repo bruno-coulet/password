@@ -1,27 +1,18 @@
-import hashlib, json, os, random, string
-
-#-------------------    VARIABLES   ---------------------------------------------------------------------------
-
-specialCarac =['$','!', '@', '#', '%','^', '&', '*']
-registre = []
-valid = False
-hashed =''
-hashed_exists = False
-
+import hashlib, json, os, random, string, pprint
 
 #-------------------    FONCTIONS   ---------------------------------------------------------------------------
 
-def motDePasse():                                       # demande un mot de passe en input ou généré automatiquement
+def motDePasse():                                  # demande un mot de passe en input, sinon généré automatiquement -> validation()
     global password
     password = input("Choisissez un mot de passe (ou appuyez sur Entrée pour générer un mot de passe aléatoire) : ")
-    if not password:                                # si input vierge, appel la fonction generate_random_password
+    if not password:                               # si input vierge, appel la fonction generate_random_password
         password = generate_random_password()
         print(f"\nMot de passe aléatoire généré : {password}")
     validation()
 
-def validation():                                       # valide le mot de passe -> valid = True
-    global valid, hashed, hashed_exists, account_exists
-
+def validation():                                  # Si mdp ok-> crypt256() et valid = True. Sinon-> motDePasse()
+    global valid, hashed#, hashed_exists, account_exists
+    specialCarac =['$','!', '@', '#', '%','^', '&', '*']
     if len(password)<8:                                     # demande un autre mot de passe
         print("Votre mot de passe doit contenir au moins 8 caractères !")
         motDePasse()
@@ -37,21 +28,10 @@ def validation():                                       # valide le mot de passe
     if not any(char in specialCarac for char in password):  # demande un autre mot de passe
         print("Votre mot de passe doit contenir au moins un caractère spéciale : !, @, #, $, %, ^, &, *")
         motDePasse()
-    else:
-        hashed = crypt_256(password)                        # enregistre le mot de passe crypté dans "hashed"
+    else:                                                   # appel crypt_256(), enregistre le mdp hashé dans "hashed"                            
+        hashed = crypt_256(password)
         
-        for i in registre:
-            for j in i:
-                if hashed == j:
-                    motDePasse()
-        else:
-            valid = True
-            print("\nMot de passe validé")
-            print("Le mot de passe a été crypté")
-
-
-
-def generate_random_password(length=12):                # génère le mot de passe
+def generate_random_password(length=12):           # génère le mot de passe, appelé dans motDePasse()
     specialCarac = ['$','!', '@', '#', '%','^', '&', '*']
     # 1 caractère aléatoire et obligatoire dans chaque catégories
     random_special = random.choice(specialCarac)
@@ -69,65 +49,39 @@ def generate_random_password(length=12):                # génère le mot de pas
     random.shuffle(password_list)
     return ''.join(password_list)
 
-def crypt_256(password):                                # Pour crypter le mot de passe
+def crypt_256(password):                           # Pour crypter le mot de passe
     m = hashlib.sha256()
     m.update(password.encode('utf-8'))
     return m.hexdigest()
 
-def passwordAccount_old():                                  # demande à quel compte relier le mot de passe
-    global account
-    global registre
-    global hashed
-    global valid
-    global account_exists
-
-    if valid == True:
-        account = input("À quel compte ce mot de passe est-il relié : ")
-     
-        # vérifie si account existe dans registre
-        account_exists = False
-        for entry in registre:
-            if account in entry:
-                account_exists = True
-                print(f"Le compte {account} existe déjà.")
-                return
-        # Sinon, ajoute account et hashed à registre    
-        
-        new_entry = {account: hashed}
-        registre.append(new_entry)
-        print(f"\nLe mot de passe pour le compte '{account}' a été ajouté à la liste registre.json\n")
-
-
-
 #-------------------    SCRIPT  ---------------------------------------------------------------------------
-#print ("valid =",valid)
 
-
-if os.path.exists('registre.json'):
-    with open('registre.json', 'r') as json_file:
-        registre = json.load(json_file)
-else:
-    registre = []
-
-print(f"\nAprès vérification :\nregistre = {registre}")
-
-motDePasse()
-
-registre.append(hashed)
 
 if os.path.exists('registre.json'):                 # si registre.json existe
     with open('registre.json', 'r') as json_file:   # ouvre registre.json
-        existing_data = json.load(json_file)        # charge son contenu dans existing_data
+        registre = json.load(json_file)             # charge son contenu dans registre
 else:                                               # sinon
-    existing_data = []                              # crée la liste existing_data
+    registre = []                                   # crée la liste registre[]
 
-existing_data.extend(registre)                      # ajoute la liste registre à existing data
+print("\nAu début du script, registre.json contient :\n")
+pprint.pprint(registre)
+print('\n')
+
+motDePasse()
+if hashed not in registre:
+    registre.append(hashed)
+    print("\nMot de passe validé\n")
+    print("Le mot de passe a été crypté et ajouté au registre")
+else:
+    print("\nCe mot de passe est déjà utilisé\nChoisissez un mot de passe différent !")
 
 with open('registre.json', 'w') as json_file:       # ajoute existing_data à registre.json
-    json.dump(existing_data, json_file, indent=4)
+    json.dump(registre, json_file, indent=4)
     json_file.write('\n')
 
-print(f"\naprès la fonctions et le script :\nregistre = {registre}\n")
+print("\nA la fin du script, registre.json contient :\n")
+pprint.pprint(registre)
+print('\n')
 
 
 
